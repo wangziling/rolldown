@@ -990,11 +990,18 @@ expression: "snapshot_outputs.join(\"\\n\")"
 - foo-!~{001}~.mjs => foo-y4QWWTtX.mjs
 - main-!~{000}~.mjs => main-aZfKZWQl.mjs
 
+# tests/esbuild/splitting/dynamic_and_not_dynamic_commonjs_into_es6
+
+- $runtime$-!~{003}~.mjs => $runtime$-jJEZqZu9.mjs
+- foo-!~{001}~.mjs => foo-3IYD1jk9.mjs
+- foo~1-!~{002}~.mjs => foo~1-3uh3qeiy.mjs
+- main-!~{000}~.mjs => main-6b_Z-Jkw.mjs
+
 # tests/esbuild/splitting/dynamic_and_not_dynamic_es6_into_es6
 
 - foo-!~{001}~.mjs => foo-O6enMBv0.mjs
 - foo~1-!~{002}~.mjs => foo~1-Sof3A-nJ.mjs
-- main-!~{000}~.mjs => main-8i8JF42P.mjs
+- main-!~{000}~.mjs => main-tRMbAGeX.mjs
 
 # tests/esbuild/splitting/dynamic_import_issue_272
 
@@ -1179,6 +1186,12 @@ expression: "snapshot_outputs.join(\"\\n\")"
 - b-!~{001}~.mjs => b-qe8TOhJq.mjs
 - shared-!~{002}~.mjs => shared-ACOB7Y24.mjs
 
+# tests/fixtures/code_splitting/import_export_unicode
+
+- foo-!~{001}~.mjs => foo-iaNEv4T3.mjs
+- foo~1-!~{002}~.mjs => foo~1-3fuLbyqQ.mjs
+- main-!~{000}~.mjs => main-Ti07to62.mjs
+
 # tests/fixtures/deconflict/basic
 
 - main-!~{000}~.mjs => main-S-XTf22h.mjs
@@ -1278,9 +1291,29 @@ expression: "snapshot_outputs.join(\"\\n\")"
 - main-!~{000}~.mjs => main-LeJVwZoF.mjs
 - share-!~{002}~.mjs => share-eIGIrVeP.mjs
 
+# tests/fixtures/function/format/cjs/import_export_unicode
+
+- main-!~{000}~.cjs => main-wZIizBnE.cjs
+
 # tests/fixtures/function/format/cjs/plain_import_should_not_introduce_to_esm
 
 - main-!~{000}~.cjs => main-rClOc9Ow.cjs
+
+# tests/fixtures/function/format/esm/import_export_unicode
+
+- main-!~{000}~.mjs => main-usfFiBny.mjs
+
+# tests/fixtures/function/loader/json/array
+
+- main-!~{000}~.mjs => main-4Kd30BAw.mjs
+
+# tests/fixtures/function/loader/json/object
+
+- main-!~{000}~.mjs => main-3FhLLo2b.mjs
+
+# tests/fixtures/function/loader/json/object_with_invalid_key
+
+- main-!~{000}~.mjs => main-pZUL7Yg8.mjs
 
 # tests/fixtures/function/platform/node/should_not_throw_warnings_for_import_builtin_modules/basic
 
@@ -1316,6 +1349,10 @@ expression: "snapshot_outputs.join(\"\\n\")"
 # tests/fixtures/function/shim_missing_exports/shake_unused_shimmed_exports
 
 - main-!~{000}~.mjs => main-z7O5ieUj.mjs
+
+# tests/fixtures/function/tree_shaking/json_object
+
+- main-!~{000}~.mjs => main-Ep15x52X.mjs
 
 # tests/fixtures/function/tree_shaking/unused_import_external
 

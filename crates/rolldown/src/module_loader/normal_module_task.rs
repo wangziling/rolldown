@@ -1,15 +1,14 @@
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::Result;
 use futures::future::join_all;
-use oxc::span::SourceType;
 use oxc_index::IndexVec;
 use rolldown_common::{
   AstScope, ImportRecordId, ModuleType, NormalModule, NormalModuleId, PackageJson, RawImportRecord,
   ResolvedPath, ResolvedRequestInfo, ResourceId, SymbolRef,
 };
 use rolldown_error::BuildError;
-use rolldown_oxc_utils::{OxcAst, OxcCompiler};
+use rolldown_oxc_utils::OxcAst;
 use rolldown_plugin::{HookResolveIdExtraOptions, SharedPluginDriver};
 use rolldown_resolver::ResolveError;
 use sugar_path::SugarPath;
@@ -19,7 +18,10 @@ use crate::{
   ast_scanner::{AstScanner, ScanResult},
   module_loader::NormalModuleTaskResult,
   types::ast_symbols::AstSymbols,
-  utils::{load_source::load_source, resolve_id::resolve_id, transform_source::transform_source},
+  utils::{
+    load_source::load_source, parse_to_ast::parse_to_ast, resolve_id::resolve_id,
+    transform_source::transform_source,
+  },
   SharedOptions, SharedResolver,
 };
 pub struct NormalModuleTask {
@@ -81,7 +83,7 @@ impl NormalModuleTask {
         .await?
         .into();
 
-    let (ast, scope, scan_result, ast_symbol, namespace_symbol) = self.scan(&source);
+    let (ast, scope, scan_result, ast_symbol, namespace_symbol) = self.scan(&source)?;
 
     let resolved_deps =
       self.resolve_dependencies(&scan_result.import_records, &mut warnings).await?;
@@ -170,32 +172,11 @@ impl NormalModuleTask {
     Ok(())
   }
 
-  fn scan(&self, source: &Arc<str>) -> (OxcAst, AstScope, ScanResult, AstSymbols, SymbolRef) {
-    fn determine_oxc_source_type(path: impl AsRef<Path>, ty: ModuleType) -> SourceType {
-      // Determine oxc source type for parsing
-      let mut default = SourceType::default().with_module(true);
-      // Rolldown considers module as esm by default.
-      debug_assert!(default.is_module());
-      debug_assert!(default.is_javascript());
-      debug_assert!(!default.is_jsx());
-      let extension = path.as_ref().extension().and_then(std::ffi::OsStr::to_str);
-      default = match ty {
-        ModuleType::CJS | ModuleType::CjsPackageJson => default.with_script(true),
-        _ => default,
-      };
-      if let Some(ext) = extension {
-        default = match ext {
-          "cjs" => default.with_script(true),
-          "jsx" => default.with_jsx(true),
-          _ => default,
-        };
-      };
-      default
-    }
-
-    let source_type =
-      determine_oxc_source_type(self.resolved_path.path.as_path(), self.module_type);
-    let mut program = OxcCompiler::parse(Arc::clone(source), source_type);
+  fn scan(
+    &self,
+    source: &Arc<str>,
+  ) -> anyhow::Result<(OxcAst, AstScope, ScanResult, AstSymbols, SymbolRef)> {
+    let mut program = parse_to_ast(self.resolved_path.path.as_path(), Arc::clone(source))?;
 
     let (mut symbol_table, scope) = program.make_symbol_table_and_scope_tree();
     let ast_scope = AstScope::new(
@@ -219,7 +200,7 @@ impl NormalModuleTask {
     program.hoist_import_export_from_stmts();
     let scan_result = scanner.scan(program.program());
 
-    (program, ast_scope, scan_result, symbol_for_module, namespace_symbol)
+    Ok((program, ast_scope, scan_result, symbol_for_module, namespace_symbol))
   }
 
   #[allow(clippy::option_if_let_else)]
